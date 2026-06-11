@@ -1,0 +1,11 @@
+backend/node_modules
+backend/dist
+backend/storage
+backend/.env
+backend/*.sqlite
+backend/*.sqlite-journal
+extension/node_modules
+extension/dist
+.DS_Store
+*.log
+prompt.txt

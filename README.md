@@ -1,66 +1,144 @@
 # Facebook Group CRM
 
-Lightweight CRM for Facebook group admins. Chrome extension + Node.js backend.
-Reads what's visible in facebook.com/groups/* (DOM-based, user-triggered scans),
-stores structured CRM data per group/member.
+Facebook Group CRM is a lightweight CRM for Facebook group admins that combines a Chrome extension with a TypeScript backend. It scans only the information already visible on Facebook group pages and stores structured CRM data for groups, members, notes, tags, scans, and activity stats.
 
-> No Facebook Graph API. No automation, no message sending, no auto-scrolling.
-> Admin-driven scans only. Built to comply with Facebook ToS by behaving as a
-> passive read-only assistant over the pages the user already opened.
+## What it does
 
-## Layout
+It helps group admins turn visible Facebook group activity into searchable CRM records without using the Facebook Graph API.
 
+## Why it exists
+
+Group admins often track members, leads, and follow-up notes manually. This project turns the visible group pages they already use into a read-only data source for lightweight CRM workflows.
+
+## Features
+
+- Chrome Manifest V3 extension with a side panel UI
+- Group detection from Facebook group URLs
+- Visible member scanning from group member pages
+- Visible post scanning from the group feed
+- Backend APIs for auth, groups, members, scans, notes, tags, and stats
+- SQLite storage through a TypeScript backend
+- Manual, admin-triggered scan model with no auto-scrolling or message sending
+
+## How it works
+
+1. A content script runs on `facebook.com/groups/*`.
+2. The extension detects the current group and can scan visible members or posts from the active page.
+3. The side panel sends those scan results to the backend.
+4. The backend stores CRM data in SQLite and exposes APIs for notes, tags, stats, and member records.
+5. All scanning is initiated by the user and limited to information already visible in the browser.
+
+## Tech stack
+
+- Chrome Extension (Manifest V3)
+- React
+- TypeScript
+- Vite
+- Fastify
+- Drizzle ORM
+- SQLite
+- Zod
+
+## Project structure
+
+```text
+backend/
+  src/
+    auth/            authentication routes
+    groups/          group APIs
+    members/         member APIs
+    scans/           member and post scan APIs
+    notes/           note APIs
+    tags/            tag APIs
+    stats/           aggregated stats APIs
+extension/
+  src/
+    background/      service worker
+    content/         DOM readers for groups, members, and posts
+    panel/           side panel UI
+    shared/          extension message contracts
 ```
-fbgroup-crm/
-├── backend/      Fastify + Drizzle + SQLite (TypeScript)
-└── extension/    Chrome MV3 extension (React + Vite + TypeScript)
+
+## Getting started
+
+```bash
+git clone <repo-url>
+cd fbgroup-crm
 ```
 
-## Quick start
+Backend:
 
-### Backend
 ```bash
 cd backend
 npm install
 cp .env.example .env
 npm run db:migrate
-npm run dev          # http://localhost:5321
+npm run dev
 ```
 
-### Extension
+Extension:
+
 ```bash
 cd extension
 npm install
-npm run build        # outputs dist/
+npm run build
 ```
-Then `chrome://extensions` → enable Developer mode → "Load unpacked" → pick `extension/dist`.
 
-## What's different from a WhatsApp CRM
+Then open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select `extension/dist`.
 
-Facebook groups are URL-addressable and the member identity is much stronger:
+## Configuration
 
-| Concern               | WhatsApp Web                       | Facebook Groups                            |
-|-----------------------|------------------------------------|--------------------------------------------|
-| Group identifier      | DOM-only fingerprint               | `facebook.com/groups/{idOrSlug}` from URL  |
-| Member identity       | Phone (often hidden)               | Profile URL → `fbid` or `username`         |
-| Member list location  | Group Info side panel              | `/groups/{id}/members/` page (sub-tabs)    |
-| Roles                 | admin / member                     | admin / moderator / member / new_member    |
-| Activity signal       | Message bubbles in chat            | Posts in feed: author, time, reactions, comments |
+The backend reads `backend/.env`:
 
-That means matching is much more reliable, and you can pull richer activity stats
-per post (likes/comments) instead of message counts.
+```env
+PORT=5321
+HOST=0.0.0.0
+JWT_SECRET=change-me-to-a-random-string
+STORAGE_DIR=./storage
+CORS_ORIGINS=chrome-extension://*,http://localhost:5174
+```
 
-## Phases
+The extension does not currently use environment variables.
 
-1. Extension foundation — login, FB detection, group detection from URL
-2. Member scan — `/members/` page, sub-tab aware, manual scroll-and-rescan
-3. CRM fields — notes, tags, subscription/payment status, source, search/filter
-4. Stats + posts feed activity scan (with reaction/comment counts)
+## Usage
 
-## Privacy
+1. Start the backend.
+2. Build and load the Chrome extension.
+3. Open a Facebook group page in the browser.
+4. Use the extension side panel to detect the group and trigger visible scans.
+5. Review stored members, notes, tags, and stats through the CRM workflow.
 
-- Only runs on facebook.com.
-- Stores profile metadata (display name, profile URL, profile picture URL).
-- Does not store post bodies by default — only metadata (author, timestamp, reaction/comment counts).
-- All data is per-workspace, isolated to its own SQLite file.
-- Export/delete endpoints supported.
+## Development
+
+```bash
+cd backend && npm run dev
+cd backend && npm run build
+cd backend && npm run db:migrate
+cd extension && npm run dev
+cd extension && npm run build
+cd extension && npm run typecheck
+```
+
+There is currently no automated test suite in the repository.
+
+## Roadmap
+
+- Add clearer admin UI workflows for searching and filtering members
+- Add export tooling for scanned group data
+- Add automated tests for scanners and backend route validation
+- Add packaging and release instructions for extension distribution
+
+## Contributing
+
+This project is public and open for collaboration. If you’re interested in contributing, improving the project, or discussing ideas, feel free to reach out.
+
+LinkedIn: https://linkedin.com/in/alexrada
+
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Open a pull request
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
